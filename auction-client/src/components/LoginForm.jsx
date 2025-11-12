@@ -78,6 +78,13 @@ export default function LoginForm() {
     }
   };
 
+  const fillDemo = () => {
+    setFormData((f) => ({ ...f, username: 'demo_user', password: 'demo_pass' }));
+    setError('');
+    setSuccess('Filled demo credentials — press Sign In');
+    setTimeout(() => setSuccess(''), 2500);
+  };
+
   const toggleMode = () => {
     setIsRegisterMode(!isRegisterMode);
     setError('');
@@ -236,6 +243,19 @@ export default function LoginForm() {
               {isRegisterMode ? ' Sign In' : ' Sign Up'}
             </button>
           </p>
+          {!isRegisterMode && (
+            <div style={{ marginTop: 8 }}>
+              <small className="muted">Need a quick test account?</small>
+              <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+                <button type="button" className="btn btn-outline" onClick={fillDemo} disabled={loading}>
+                  Use Demo Account
+                </button>
+                <div style={{ alignSelf: 'center', fontSize: 13 }}>
+                  <strong>demo_user</strong> / <em>demo_pass</em>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
