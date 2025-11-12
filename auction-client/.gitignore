@@ -19,6 +19,8 @@ node_modules/
 .env.production.local
 
 # Logs
+# Node.js
+node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -26,6 +28,31 @@ pnpm-debug.log*
 lerna-debug.log*
 
 # Editor directories and files
+
+# dotenv environment variables
+.env
+.env.*.local
+.env.local
+
+# Build output
+dist/
+build/
+out/
+
+# Next.js
+.next/
+
+# Vite cache
+.vite/
+
+# Parcel
+.parcel-cache/
+
+# Testing
+coverage/
+.nyc_output/
+
+# IDEs and editors
 .idea/
 .vscode/
 *.suo
@@ -80,3 +107,31 @@ out
 tmp/
 temp/
 
+
+# macOS files
+.DS_Store
+
+# Logs
+*.log
+
+# Lockfiles (optional to ignore)
+# package-lock.json
+# yarn.lock
+
+# Misc
+*.pem
+*.key
+*.crt
+*.p12
+
+# OS generated files
+Thumbs.db
+
+# Local env for editors
+.local/
+
+# Storybook
+.storybook/
+
+# Jest cache
+.jest/
