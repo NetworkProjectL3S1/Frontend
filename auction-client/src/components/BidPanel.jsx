@@ -1,4 +1,9 @@
 import React, { useState } from 'react'
+import { DollarSign, Loader2 } from 'lucide-react'
+import { Button } from './ui/button'
+import { Input } from './ui/input'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
+import { Label } from './ui/label'
 
 const API_BASE = 'http://localhost:8081/api'
 
@@ -41,23 +46,49 @@ export default function BidPanel({ auctionId, currentHighest = 0, onBidded }) {
   }
 
   return (
-    <div className="bid-panel">
-      <h3>Place a Bid</h3>
-      <form onSubmit={handlePlace} className="bid-form">
-        <input
-          aria-label="bid-amount"
-          type="number"
-          step="0.01"
-          placeholder={`Min ${(Number(currentHighest) + 0.01).toFixed(2)}`}
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-        />
-        <button className="btn btn-primary" type="submit" disabled={loading}>
-          {loading ? 'Placing…' : 'Place Bid'}
-        </button>
-      </form>
-      {error && <div className="error">{error}</div>}
-      {success && <div className="success">{success}</div>}
-    </div>
+    <Card className="border-2 border-primary/20 shadow-lg">
+      <CardHeader className="bg-gradient-to-r from-primary/10 to-accent/10">
+        <CardTitle className="flex items-center gap-2">
+          <DollarSign className="h-5 w-5 text-primary" />
+          Place a Bid
+        </CardTitle>
+        <CardDescription className="font-semibold">
+          Minimum bid: ${(Number(currentHighest) + 0.01).toFixed(2)}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="pt-6">
+        <form onSubmit={handlePlace} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="bid-amount" className="text-sm font-semibold">Bid Amount</Label>
+            <Input
+              id="bid-amount"
+              type="number"
+              step="0.01"
+              placeholder={`Min ${(Number(currentHighest) + 0.01).toFixed(2)}`}
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              disabled={loading}
+              className="border-2 text-lg font-semibold"
+            />
+          </div>
+          
+          <Button className="w-full font-semibold" type="submit" disabled={loading}>
+            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {loading ? 'Placing Bid...' : 'Place Bid'}
+          </Button>
+          
+          {error && (
+            <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md border-2 border-destructive/20 font-medium">
+              {error}
+            </div>
+          )}
+          {success && (
+            <div className="text-sm text-green-600 bg-green-50 p-3 rounded-md border-2 border-green-200 font-medium">
+              {success}
+            </div>
+          )}
+        </form>
+      </CardContent>
+    </Card>
   )
 }
