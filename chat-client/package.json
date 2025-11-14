@@ -1,0 +1,35 @@
+{
+  "name": "websocket-chat-client",
+  "version": "1.0.0",
+  "description": "A modern web client for Java WebSocket Chat Server",
+  "main": "index.html",
+  "scripts": {
+    "start": "python -m http.server 3000",
+    "serve": "npx http-server -p 3000 -o",
+    "dev": "npx live-server --port=3000"
+  },
+  "keywords": [
+    "websocket",
+    "chat",
+    "client",
+    "java",
+    "frontend"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1",
+    "live-server": "^1.2.2"
+  },
+  "engines": {
+    "node": ">=12.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "."
+  },
+  "browserslist": [
+    "defaults",
+    "not IE 11"
+  ]
+}
