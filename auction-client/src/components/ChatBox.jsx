@@ -85,27 +85,42 @@ export default function ChatBox({ auctionId, sellerId }) {
 
     // Subscribe to messages for this auction
     const unsubscribeMessages = auctionChatService.subscribeToAuction(auctionId, (message) => {
-      console.log('[ChatBox] Received message:', message);
+      console.log('[ChatBox] Received WebSocket message:', message);
+      console.log('[ChatBox] Current user:', user?.username);
+      console.log('[ChatBox] Message sender:', message.username || message.senderUsername);
       
       // Create unique message ID based on sender, content, and approximate timestamp
-      const messageId = `${message.username || message.senderUsername}_${message.content}_${Math.floor(message.timestamp / 1000)}`;
+      const messageSender = message.username || message.senderUsername;
+      const messageId = `${messageSender}_${message.content}_${Math.floor(message.timestamp / 1000)}`;
+      
+      console.log('[ChatBox] Message ID:', messageId);
       
       // Check and update both messages and IDs atomically
       setMessages(prev => {
+        console.log('[ChatBox] Current messages count:', prev.length);
+        
         // Check if this message already exists
         const existingIds = new Set();
         prev.forEach(m => {
-          const id = `${m.username || m.senderUsername}_${m.content}_${Math.floor(m.timestamp / 1000)}`;
+          const sender = m.username || m.senderUsername;
+          const id = `${sender}_${m.content}_${Math.floor(m.timestamp / 1000)}`;
           existingIds.add(id);
         });
         
+        console.log('[ChatBox] Existing message IDs:', Array.from(existingIds));
+        
         if (existingIds.has(messageId)) {
-          console.log('[ChatBox] Skipping duplicate message with ID:', messageId);
+          console.log('[ChatBox] ❌ Skipping duplicate message with ID:', messageId);
           return prev;
         }
         
-        console.log('[ChatBox] Adding new message:', message);
-        return [...prev, message];
+        console.log('[ChatBox] ✅ Adding new message from', messageSender);
+        return [...prev, {
+          ...message,
+          username: messageSender,
+          senderUsername: messageSender,
+          isOwnMessage: messageSender === user?.username
+        }];
       });
     });
 

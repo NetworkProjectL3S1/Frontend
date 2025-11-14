@@ -17,6 +17,7 @@ export default function SellerChatsPage() {
   const [selectedAuction, setSelectedAuction] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isConnected, setIsConnected] = useState(false);
+  const [auctionBuyers, setAuctionBuyers] = useState({});
 
   // Fetch seller's auctions
   useEffect(() => {
@@ -28,20 +29,22 @@ export default function SellerChatsPage() {
     fetchSellerAuctions();
   }, [user, navigate]);
 
-  // Load chat messages from database for all auctions
+  // Load chat messages and buyers from database for all auctions
   useEffect(() => {
     if (!auctions.length) return;
 
     const loadAllMessages = async () => {
       const messagesMap = {};
+      const buyersMap = {};
       
       for (const auction of auctions) {
         try {
+          // Load messages
           const res = await fetch(`${API_BASE}/chat/messages?auctionId=${auction.auctionId}`);
           const data = await res.json();
           
           if (data.success && Array.isArray(data.data)) {
-            messagesMap[auction.auctionId] = data.data.map(msg => ({
+            const messages = data.data.map(msg => ({
               username: msg.senderUsername,
               senderUsername: msg.senderUsername,
               content: msg.content,
@@ -49,6 +52,21 @@ export default function SellerChatsPage() {
               isOwnMessage: msg.senderUsername === user?.username,
               fromDatabase: true
             }));
+            messagesMap[auction.auctionId] = messages;
+            
+            // Extract unique buyers from messages
+            const buyers = [...new Set(
+              messages
+                .filter(m => !m.isOwnMessage)
+                .map(m => m.senderUsername)
+            )];
+            
+            // If no buyers in messages but auction has highest bidder, use that
+            if (buyers.length === 0 && auction.currentHighestBidder && auction.currentHighestBidder !== 'None') {
+              buyers.push(auction.currentHighestBidder);
+            }
+            
+            buyersMap[auction.auctionId] = buyers;
           }
         } catch (error) {
           console.error(`Failed to load messages for auction ${auction.auctionId}:`, error);
@@ -56,6 +74,7 @@ export default function SellerChatsPage() {
       }
       
       setChatMessages(messagesMap);
+      setAuctionBuyers(buyersMap);
     };
 
     loadAllMessages();
@@ -88,28 +107,40 @@ export default function SellerChatsPage() {
 
     auctions.forEach(auction => {
       const unsubscribe = auctionChatService.subscribeToAuction(auction.auctionId, (message) => {
-        console.log('[SellerChats] New message for auction', auction.auctionId, message);
+        console.log('[SellerChats] 📨 New WebSocket message for auction', auction.auctionId);
+        console.log('[SellerChats] Message details:', message);
+        console.log('[SellerChats] Message sender:', message.username || message.senderUsername);
+        console.log('[SellerChats] Current seller:', user?.username);
         
         setChatMessages(prev => {
           const existingMessages = prev[auction.auctionId] || [];
           
           // Check for duplicates using normalized timestamp (to second precision)
-          const messageId = `${message.username || message.senderUsername}_${message.content}_${Math.floor(message.timestamp / 1000)}`;
+          const messageSender = message.username || message.senderUsername;
+          const messageId = `${messageSender}_${message.content}_${Math.floor(message.timestamp / 1000)}`;
+          
+          console.log('[SellerChats] Creating message ID:', messageId);
+          console.log('[SellerChats] Existing messages count:', existingMessages.length);
           
           const isDuplicate = existingMessages.some(m => {
-            const existingId = `${m.username || m.senderUsername}_${m.content}_${Math.floor(m.timestamp / 1000)}`;
+            const sender = m.username || m.senderUsername;
+            const existingId = `${sender}_${m.content}_${Math.floor(m.timestamp / 1000)}`;
             return existingId === messageId;
           });
           
           if (isDuplicate) {
-            console.log('[SellerChats] Skipping duplicate message');
+            console.log('[SellerChats] ❌ Skipping duplicate message');
             return prev;
           }
           
-          console.log('[SellerChats] Adding new message to auction', auction.auctionId);
+          console.log('[SellerChats] ✅ Adding new message from', messageSender);
           return {
             ...prev,
-            [auction.auctionId]: [...existingMessages, message]
+            [auction.auctionId]: [...existingMessages, {
+              ...message,
+              username: messageSender,
+              senderUsername: messageSender
+            }]
           };
         });
       });
@@ -231,15 +262,20 @@ export default function SellerChatsPage() {
                     disabled={!isConnected}
                     onKeyPress={(e) => {
                       if (e.key === 'Enter' && e.target.value.trim()) {
-                        const messages = chatMessages[selectedAuction.auctionId] || [];
-                        const buyerMessages = messages.filter(m => 
-                          (m.username || m.senderUsername) !== user.username
-                        );
-                        const lastBuyerMessage = buyerMessages[buyerMessages.length - 1];
+                        // Get buyer username from auction buyers list or highest bidder
+                        const buyers = auctionBuyers[selectedAuction.auctionId] || [];
+                        let buyerUsername = buyers[0]; // Use first buyer in list
                         
-                        if (lastBuyerMessage) {
-                          const buyerUsername = lastBuyerMessage.username || lastBuyerMessage.senderUsername;
-                          console.log('[SellerChats] Sending reply to buyer:', buyerUsername);
+                        // Fallback to highest bidder if no buyers in list
+                        if (!buyerUsername && selectedAuction.currentHighestBidder && selectedAuction.currentHighestBidder !== 'None') {
+                          buyerUsername = selectedAuction.currentHighestBidder;
+                        }
+                        
+                        if (buyerUsername) {
+                          console.log('[SellerChats] 📤 Sending message to buyer:', buyerUsername);
+                          console.log('[SellerChats] Auction ID:', selectedAuction.auctionId);
+                          console.log('[SellerChats] Message:', e.target.value.trim());
+                          console.log('[SellerChats] Current seller:', user?.username);
                           
                           const sent = auctionChatService.sendPrivateMessage(
                             buyerUsername,
@@ -247,10 +283,16 @@ export default function SellerChatsPage() {
                             selectedAuction.auctionId
                           );
                           if (sent) {
+                            console.log('[SellerChats] ✅ Message sent successfully');
                             e.target.value = '';
+                          } else {
+                            console.error('[SellerChats] ❌ Failed to send message');
                           }
                         } else {
-                          alert('No buyer has sent a message yet');
+                          console.error('[SellerChats] ❌ No buyer username found');
+                          console.log('[SellerChats] Buyers list:', buyers);
+                          console.log('[SellerChats] Highest bidder:', selectedAuction.currentHighestBidder);
+                          alert('No buyer available for this auction yet. Wait for a bid or message.');
                         }
                       }
                     }}
@@ -260,15 +302,20 @@ export default function SellerChatsPage() {
                     onClick={() => {
                       const input = document.getElementById('seller-reply-input');
                       if (input && input.value.trim()) {
-                        const messages = chatMessages[selectedAuction.auctionId] || [];
-                        const buyerMessages = messages.filter(m => 
-                          (m.username || m.senderUsername) !== user.username
-                        );
-                        const lastBuyerMessage = buyerMessages[buyerMessages.length - 1];
+                        // Get buyer username from auction buyers list or highest bidder
+                        const buyers = auctionBuyers[selectedAuction.auctionId] || [];
+                        let buyerUsername = buyers[0]; // Use first buyer in list
                         
-                        if (lastBuyerMessage) {
-                          const buyerUsername = lastBuyerMessage.username || lastBuyerMessage.senderUsername;
-                          console.log('[SellerChats] Button click - Sending reply to buyer:', buyerUsername);
+                        // Fallback to highest bidder if no buyers in list
+                        if (!buyerUsername && selectedAuction.currentHighestBidder && selectedAuction.currentHighestBidder !== 'None') {
+                          buyerUsername = selectedAuction.currentHighestBidder;
+                        }
+                        
+                        if (buyerUsername) {
+                          console.log('[SellerChats] Button click - 📤 Sending message to buyer:', buyerUsername);
+                          console.log('[SellerChats] Auction ID:', selectedAuction.auctionId);
+                          console.log('[SellerChats] Message:', input.value.trim());
+                          console.log('[SellerChats] Current seller:', user?.username);
                           
                           const sent = auctionChatService.sendPrivateMessage(
                             buyerUsername,
@@ -276,10 +323,16 @@ export default function SellerChatsPage() {
                             selectedAuction.auctionId
                           );
                           if (sent) {
+                            console.log('[SellerChats] ✅ Message sent successfully');
                             input.value = '';
+                          } else {
+                            console.error('[SellerChats] ❌ Failed to send message');
                           }
                         } else {
-                          alert('No buyer has sent a message yet');
+                          console.error('[SellerChats] ❌ No buyer username found');
+                          console.log('[SellerChats] Buyers list:', buyers);
+                          console.log('[SellerChats] Highest bidder:', selectedAuction.currentHighestBidder);
+                          alert('No buyer available for this auction yet. Wait for a bid or message.');
                         }
                       }
                     }}
