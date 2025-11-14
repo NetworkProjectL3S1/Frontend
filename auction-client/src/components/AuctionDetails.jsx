@@ -63,9 +63,9 @@ export default function AuctionDetails({ auction, onClose, onRefresh }) {
         </div>
       </CardHeader>
 
-      <CardContent className="pt-6">
-        <div className="grid md:grid-cols-3 gap-6">
-          <div className="md:col-span-2 space-y-6">
+      <CardContent className="pt-8 px-6 pb-8">
+        <div className="grid md:grid-cols-3 gap-8">
+          <div className="md:col-span-2 space-y-8">
             <Card className="border-2">
               <CardHeader className="bg-slate-50">
                 <CardTitle className="text-lg">Description</CardTitle>

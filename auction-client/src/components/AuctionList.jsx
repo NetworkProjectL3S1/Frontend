@@ -65,8 +65,8 @@ export default function AuctionList() {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="flex justify-between items-center mb-8">
+    <div className="container mx-auto py-10 px-6 md:px-8 lg:px-12">md:px-8 lg:px-12">
+      <div className="flex justify-between items-center mb-10 mt-2">
         <div>
           <h2 className="text-3xl font-bold tracking-tight">Live Auctions</h2>
           <p className="text-muted-foreground mt-1">Browse and bid on active auctions</p>
