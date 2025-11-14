@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Progress Bar Preview</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-2xl mx-auto space-y-8">
+        <h1 class="text-3xl font-bold text-center mb-8">Auction Timer Progress Bar Examples</h1>
+        
+        <!-- Green - Plenty of time (80%) -->
+        <div class="bg-white p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" stroke-width="2"/>
+                    <path d="M12 6v6l4 2" stroke-width="2"/>
+                </svg>
+                Plenty of Time Remaining
+            </h2>
+            <div class="space-y-2">
+                <div class="flex items-center justify-between text-sm">
+                    <span class="font-semibold text-green-700">80.0% time remaining</span>
+                    <span class="text-gray-600">48h 0m 0s left</span>
+                </div>
+                <div class="w-full h-3 bg-green-100 rounded-full overflow-hidden border border-gray-300">
+                    <div class="h-full bg-green-500 transition-all duration-1000 ease-linear" style="width: 80%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Yellow - Getting close (35%) -->
+        <div class="bg-white p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" stroke-width="2"/>
+                    <path d="M12 6v6l4 2" stroke-width="2"/>
+                </svg>
+                Getting Close
+            </h2>
+            <div class="space-y-2">
+                <div class="flex items-center justify-between text-sm">
+                    <span class="font-semibold text-yellow-700">35.0% time remaining</span>
+                    <span class="text-gray-600">21h 0m 0s left</span>
+                </div>
+                <div class="w-full h-3 bg-yellow-100 rounded-full overflow-hidden border border-gray-300">
+                    <div class="h-full bg-yellow-500 transition-all duration-1000 ease-linear" style="width: 35%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Red - Ending soon (10%) -->
+        <div class="bg-white p-6 rounded-lg shadow-lg">
+            <h2 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" stroke-width="2"/>
+                    <path d="M12 6v6l4 2" stroke-width="2"/>
+                </svg>
+                Ending Soon! ⚠️
+            </h2>
+            <div class="space-y-2">
+                <div class="flex items-center justify-between text-sm">
+                    <span class="font-semibold text-red-700">10.0% time remaining</span>
+                    <span class="text-gray-600">6h 0m 0s left</span>
+                </div>
+                <div class="w-full h-3 bg-red-100 rounded-full overflow-hidden border border-gray-300">
+                    <div class="h-full bg-red-500 transition-all duration-1000 ease-linear" style="width: 10%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Expired (0%) -->
+        <div class="bg-white p-6 rounded-lg shadow-lg border-2 border-red-300">
+            <h2 class="text-xl font-semibold mb-4 flex items-center gap-2 text-red-600">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" stroke-width="2"/>
+                    <path d="M15 9l-6 6m0-6l6 6" stroke-width="2"/>
+                </svg>
+                Auction Ended
+            </h2>
+            <div class="space-y-2">
+                <div class="flex items-center justify-between text-sm">
+                    <span class="font-semibold text-red-700">EXPIRED</span>
+                    <span class="text-gray-600">No time remaining</span>
+                </div>
+                <div class="w-full h-3 bg-red-100 rounded-full overflow-hidden border border-red-300">
+                    <div class="h-full bg-red-500 w-0"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Info -->
+        <div class="bg-blue-50 p-6 rounded-lg border-2 border-blue-200">
+            <h3 class="font-bold text-blue-900 mb-2">How it works:</h3>
+            <ul class="space-y-1 text-blue-800 text-sm">
+                <li>✅ <strong>Green (> 50%)</strong>: Plenty of time to bid</li>
+                <li>⚡ <strong>Yellow (20-50%)</strong>: Time is running out, place your bids!</li>
+                <li>🔥 <strong>Red (< 20%)</strong>: Last chance! Auction ending soon!</li>
+                <li>❌ <strong>Expired (0%)</strong>: Auction closed, no more bids allowed</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Simulate progress bar animation
+        let progress = 100;
+        setInterval(() => {
+            if (progress > 0) {
+                progress -= 0.5;
+                console.log('Progress:', progress);
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

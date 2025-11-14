@@ -8,7 +8,7 @@ import { Label } from './ui/label'
 
 const API_BASE = 'http://localhost:8081/api'
 
-export default function BidPanel({ auctionId, currentHighest = 0, onBidded }) {
+export default function BidPanel({ auctionId, currentHighest = 0, onBidded, disabled = false }) {
   const { user } = useAuth()
   const [amount, setAmount] = useState('')
   const [loading, setLoading] = useState(false)
@@ -17,6 +17,12 @@ export default function BidPanel({ auctionId, currentHighest = 0, onBidded }) {
 
   const handlePlace = async (e) => {
     e && e.preventDefault()
+    
+    if (disabled) {
+      setError('This auction has expired. No more bids can be placed.')
+      return
+    }
+    
     setError(null)
     setSuccess(null)
     const value = parseFloat(amount)
@@ -48,14 +54,14 @@ export default function BidPanel({ auctionId, currentHighest = 0, onBidded }) {
   }
 
   return (
-    <Card className="border-2 border-primary/20 shadow-lg">
-      <CardHeader className="bg-gradient-to-r from-primary/10 to-accent/10">
+    <Card className={`border-2 shadow-lg ${disabled ? 'border-red-300 bg-red-50/50' : 'border-primary/20'}`}>
+      <CardHeader className={disabled ? 'bg-red-100/50' : 'bg-gradient-to-r from-primary/10 to-accent/10'}>
         <CardTitle className="flex items-center gap-2">
-          <DollarSign className="h-5 w-5 text-primary" />
-          Place a Bid
+          <DollarSign className={`h-5 w-5 ${disabled ? 'text-red-500' : 'text-primary'}`} />
+          {disabled ? 'Auction Expired' : 'Place a Bid'}
         </CardTitle>
         <CardDescription className="font-semibold">
-          Minimum bid: ${(Number(currentHighest) + 0.01).toFixed(2)}
+          {disabled ? 'This auction has ended' : `Minimum bid: $${(Number(currentHighest) + 0.01).toFixed(2)}`}
         </CardDescription>
       </CardHeader>
       <CardContent className="pt-6">
@@ -66,17 +72,17 @@ export default function BidPanel({ auctionId, currentHighest = 0, onBidded }) {
               id="bid-amount"
               type="number"
               step="0.01"
-              placeholder={`Min ${(Number(currentHighest) + 0.01).toFixed(2)}`}
+              placeholder={disabled ? 'Auction expired' : `Min ${(Number(currentHighest) + 0.01).toFixed(2)}`}
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              disabled={loading}
+              disabled={loading || disabled}
               className="border-2 text-lg font-semibold"
             />
           </div>
           
-          <Button className="w-full font-semibold" type="submit" disabled={loading}>
+          <Button className="w-full font-semibold" type="submit" disabled={loading || disabled}>
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {loading ? 'Placing Bid...' : 'Place Bid'}
+            {disabled ? 'Bidding Closed' : loading ? 'Placing Bid...' : 'Place Bid'}
           </Button>
           
           {error && (

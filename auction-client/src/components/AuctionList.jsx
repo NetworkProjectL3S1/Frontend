@@ -102,6 +102,11 @@ export default function AuctionList() {
           </p>
         </div>
         <div className="flex gap-2">
+          {isSeller && (
+            <Button variant="outline" onClick={() => navigate('/seller/chats')}>
+              💬 Chats
+            </Button>
+          )}
           <Button variant="outline" onClick={() => fetchAuctions()} disabled={loading}>
             <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh

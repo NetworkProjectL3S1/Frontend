@@ -6,6 +6,8 @@ import LoginForm from './components/LoginForm';
 import AuctionList from './components/AuctionList';
 import UserProfile from './components/UserProfile';
 import AuctionPage from './pages/AuctionPage';
+import SellerChatsPage from './pages/SellerChatsPage';
+import NotificationBell from './components/NotificationBell';
 import { Badge } from './components/ui/badge';
 import {
   DropdownMenu,
@@ -81,6 +83,7 @@ function AppContent() {
             </h1>
           </div>
           <div className="flex items-center gap-4">
+            <NotificationBell />
             <DropdownMenu>
               <div ref={dropdownRef}>
                 <DropdownMenuTrigger
@@ -148,6 +151,7 @@ function AppContent() {
           <Route path="/" element={<AuctionList />} />
           <Route path="/auction/:auctionId" element={<AuctionPage />} />
           <Route path="/profile" element={<UserProfile />} />
+          <Route path="/seller/chats" element={<SellerChatsPage />} />
         </Routes>
       </main>
     </div>

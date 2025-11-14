@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, RefreshCw, Clock, User, DollarSign, TrendingUp } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Clock, User, DollarSign, TrendingUp, Trophy, AlertCircle } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 import BidPanel from '../components/BidPanel';
 import ChatBox from '../components/ChatBox';
+import AuctionProgressBar from '../components/AuctionProgressBar';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
@@ -10,14 +12,34 @@ import { bidWebSocket } from '../utils/bidWebSocket';
 
 const API_BASE = 'http://localhost:8081/api';
 
+// Format milliseconds to human-readable time
+const formatTimeRemaining = (ms) => {
+  if (ms <= 0) return 'EXPIRED';
+  
+  const seconds = Math.floor((ms / 1000) % 60);
+  const minutes = Math.floor((ms / (1000 * 60)) % 60);
+  const hours = Math.floor((ms / (1000 * 60 * 60)) % 24);
+  const days = Math.floor(ms / (1000 * 60 * 60 * 24));
+  
+  if (days > 0) return `${days}d ${hours}h ${minutes}m`;
+  if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
+  if (minutes > 0) return `${minutes}m ${seconds}s`;
+  return `${seconds}s`;
+};
+
 export default function AuctionPage() {
   const { auctionId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [auction, setAuction] = useState(null);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastBidUpdate, setLastBidUpdate] = useState(null);
+  const [timeRemaining, setTimeRemaining] = useState(null);
+  const [isExpired, setIsExpired] = useState(false);
+  const [showWinnerNotification, setShowWinnerNotification] = useState(false);
+  const [showSellerNotification, setShowSellerNotification] = useState(false);
 
   // Fetch auction details
   const fetchAuction = async () => {
@@ -58,12 +80,35 @@ export default function AuctionPage() {
     }
   }, [auctionId]);
 
-  // Subscribe to real-time bid updates
+  // Timer countdown
+  useEffect(() => {
+    if (!auction || !auction.endTime) return;
+
+    const updateTimer = () => {
+      const now = Date.now();
+      const remaining = auction.endTime - now;
+      
+      if (remaining <= 0) {
+        setTimeRemaining(0);
+        setIsExpired(true);
+      } else {
+        setTimeRemaining(remaining);
+        setIsExpired(false);
+      }
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+
+    return () => clearInterval(interval);
+  }, [auction]);
+
+  // Subscribe to real-time bid updates and expiration notifications
   useEffect(() => {
     if (!auctionId) return;
 
     const handleBidUpdate = (data) => {
-      console.log('[AuctionPage] Received bid update:', data);
+      console.log('[AuctionPage] Received update:', data);
       
       if (data.type === 'BID_UPDATE' && data.auctionId === auctionId) {
         setLastBidUpdate(data.bid);
@@ -80,6 +125,22 @@ export default function AuctionPage() {
         
         // Refresh history to show new bid
         fetchHistory();
+      } else if (data.type === 'AUCTION_EXPIRED' && data.auctionId === auctionId) {
+        // Handle auction expiration notification
+        setIsExpired(true);
+        setAuction(prev => ({
+          ...prev,
+          status: 'CLOSED',
+          currentHighestBid: data.finalPrice,
+          currentHighestBidder: data.winner
+        }));
+        
+        // Show notification if user is winner or seller
+        if (user && data.winner === user.username) {
+          setShowWinnerNotification(true);
+        } else if (user && data.seller === user.username) {
+          setShowSellerNotification(true);
+        }
       }
     };
 
@@ -89,7 +150,7 @@ export default function AuctionPage() {
     return () => {
       unsubscribe();
     };
-  }, [auctionId]);
+  }, [auctionId, user]);
 
   const handleRefresh = () => {
     fetchAuction();
@@ -135,14 +196,62 @@ export default function AuctionPage() {
         Back to Auctions
       </Button>
 
+      {/* Winner Notification */}
+      {showWinnerNotification && (
+        <Card className="mb-6 border-green-600 bg-green-50">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-green-700">
+                <Trophy className="h-6 w-6" />
+                <span className="font-bold text-lg">
+                  Congratulations! You won the auction for ${Number(auction?.currentHighestBid).toFixed(2)}!
+                </span>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setShowWinnerNotification(false)}>×</Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Seller Notification */}
+      {showSellerNotification && (
+        <Card className="mb-6 border-blue-600 bg-blue-50">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-blue-700">
+                <AlertCircle className="h-6 w-6" />
+                <span className="font-bold text-lg">
+                  Your auction "{auction?.itemName}" has ended! {auction?.currentHighestBidder ? `Winner: ${auction.currentHighestBidder} ($${Number(auction.currentHighestBid).toFixed(2)})` : 'No bids received.'}
+                </span>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setShowSellerNotification(false)}>×</Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Real-time Update Indicator */}
-      {lastBidUpdate && (
+      {lastBidUpdate && !isExpired && (
         <Card className="mb-6 border-green-500 bg-green-50 animate-pulse">
           <CardContent className="pt-6">
             <div className="flex items-center gap-2 text-green-700">
               <TrendingUp className="h-5 w-5" />
               <span className="font-medium">
                 New bid: ${Number(lastBidUpdate.amount).toFixed(2)} by {lastBidUpdate.userId}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Expired Indicator */}
+      {isExpired && (
+        <Card className="mb-6 border-red-500 bg-red-50">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 text-red-700">
+              <AlertCircle className="h-5 w-5" />
+              <span className="font-bold">
+                This auction has expired. No more bids can be placed.
               </span>
             </div>
           </CardContent>
@@ -199,20 +308,27 @@ export default function AuctionPage() {
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg border">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm text-muted-foreground">Ends At</p>
-                        <p className="text-sm font-medium">
-                          {auction?.endTime ? new Date(auction.endTime).toLocaleString() : '—'}
-                        </p>
+                  </div>
+                  
+                  {/* Progress Bar */}
+                  <div className="mt-6 p-4 bg-gradient-to-r from-slate-50 to-slate-100 rounded-lg border-2">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Clock className={`h-5 w-5 ${isExpired ? 'text-red-500' : 'text-primary'}`} />
+                      <span className="font-semibold text-lg">
+                        {isExpired ? 'Auction Ended' : 'Time Remaining: ' + (timeRemaining !== null ? formatTimeRemaining(timeRemaining) : 'Loading...')}
+                      </span>
+                    </div>
+                    {!isExpired && auction?.duration && (
+                      <AuctionProgressBar 
+                        timeRemaining={timeRemaining || 0} 
+                        duration={auction.duration}
+                      />
+                    )}
+                    {isExpired && (
+                      <div className="w-full h-3 bg-red-100 rounded-full overflow-hidden border border-red-300">
+                        <div className="h-full bg-red-500 w-0" />
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg border">
-                      <Badge variant={auction?.status === 'ACTIVE' ? 'default' : 'secondary'} className="font-semibold">
-                        {auction?.status}
-                      </Badge>
-                    </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -269,9 +385,10 @@ export default function AuctionPage() {
               <BidPanel 
                 auctionId={auction?.auctionId} 
                 currentHighest={auction?.currentHighestBid || auction?.basePrice} 
-                onBidded={handleRefresh} 
+                onBidded={handleRefresh}
+                disabled={isExpired}
               />
-              <ChatBox auctionId={auction?.auctionId} />
+              <ChatBox auctionId={auction?.auctionId} sellerId={auction?.sellerId} />
             </div>
           </div>
         </CardContent>
