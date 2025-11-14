@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Loader2, Plus } from 'lucide-react'
+import { useAuth } from '../contexts/AuthContext'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
@@ -8,10 +9,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/
 const API_BASE = 'http://localhost:8081/api'
 
 export default function CreateAuctionForm({ onCreated }) {
+  const { user } = useAuth()
   const [form, setForm] = useState({
     itemName: '',
     itemDescription: '',
-    sellerId: '',
+    sellerId: user?.username || '',
     basePrice: '',
     duration: '60',
     category: 'general'
@@ -27,8 +29,8 @@ export default function CreateAuctionForm({ onCreated }) {
     setError(null)
     setSuccess(null)
 
-    if (!form.itemName || !form.sellerId || !form.basePrice) {
-      setError('Please fill out item name, seller ID and base price')
+    if (!form.itemName || !form.basePrice) {
+      setError('Please fill out item name and base price')
       return
     }
 
@@ -37,7 +39,7 @@ export default function CreateAuctionForm({ onCreated }) {
       const body = {
         itemName: form.itemName,
         itemDescription: form.itemDescription,
-        sellerId: form.sellerId,
+        sellerId: user?.username || form.sellerId,
         basePrice: parseFloat(form.basePrice),
         duration: parseInt(form.duration, 10),
         category: form.category || 'general'
@@ -115,19 +117,7 @@ export default function CreateAuctionForm({ onCreated }) {
           />
         </div>
 
-        <div className="grid md:grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="sellerId">Seller ID *</Label>
-            <Input 
-              id="sellerId"
-              name="sellerId" 
-              value={form.sellerId} 
-              onChange={handleChange}
-              placeholder="Your ID"
-              required 
-            />
-          </div>
-
+        <div className="grid md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="basePrice">Starting Price *</Label>
             <Input 

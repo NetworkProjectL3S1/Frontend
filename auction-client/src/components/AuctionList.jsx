@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { RefreshCw, Plus, X, Eye } from 'lucide-react'
+import { RefreshCw, Plus, X, Eye, Trash2 } from 'lucide-react'
+import { useAuth } from '../contexts/AuthContext'
 import CreateAuctionForm from './CreateAuctionForm'
 import { Button } from './ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
@@ -9,12 +10,15 @@ import { Badge } from './ui/badge'
 const API_BASE = 'http://localhost:8081/api'
 
 export default function AuctionList() {
+  const { user } = useAuth()
   const navigate = useNavigate()
   const [auctions, setAuctions] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [showCreate, setShowCreate] = useState(false)
   const [rawResponse, setRawResponse] = useState(null)
+  
+  const isSeller = user?.role === 'SELLER'
 
   useEffect(() => {
     fetchAuctions()
@@ -24,8 +28,13 @@ export default function AuctionList() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(`${API_BASE}/auctions/list`)
-  const data = await res.json()
+      // If seller, fetch only their auctions
+      const endpoint = isSeller && user?.username 
+        ? `${API_BASE}/auctions/seller?sellerId=${user.username}`
+        : `${API_BASE}/auctions/list`
+      
+      const res = await fetch(endpoint)
+      const data = await res.json()
   // keep raw response for debugging when shape is unexpected
   setRawResponse(data)
   // dump raw response to console for debugging
@@ -59,27 +68,50 @@ export default function AuctionList() {
     }
   }
 
-  const handleSelect = (auction) => {
-    setSelected(auction)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+  const handleDelete = async (auctionId, e) => {
+    e.stopPropagation()
+    
+    if (!window.confirm('Are you sure you want to delete this auction?')) {
+      return
+    }
+    
+    try {
+      const res = await fetch(`${API_BASE}/auctions/${auctionId}/delete`, {
+        method: 'DELETE'
+      })
+      const data = await res.json()
+      
+      if (data.success) {
+        // Refresh the auction list
+        fetchAuctions()
+      } else {
+        alert('Failed to delete auction: ' + (data.error || 'Unknown error'))
+      }
+    } catch (err) {
+      alert('Error deleting auction: ' + err.message)
+    }
   }
 
   return (
     <div className="container mx-auto py-10 px-6 md:px-8 lg:px-12">md:px-8 lg:px-12">
       <div className="flex justify-between items-center mb-10 mt-2">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Live Auctions</h2>
-          <p className="text-muted-foreground mt-1">Browse and bid on active auctions</p>
+          <h2 className="text-3xl font-bold tracking-tight">{isSeller ? 'My Auctions' : 'Live Auctions'}</h2>
+          <p className="text-muted-foreground mt-1">
+            {isSeller ? 'Manage your listed auctions' : 'Browse and bid on active auctions'}
+          </p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => fetchAuctions()} disabled={loading}>
             <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
-          <Button onClick={() => setShowCreate(v => !v)}>
-            {showCreate ? <X className="mr-2 h-4 w-4" /> : <Plus className="mr-2 h-4 w-4" />}
-            {showCreate ? 'Close' : 'Create Auction'}
-          </Button>
+          {isSeller && (
+            <Button onClick={() => setShowCreate(v => !v)}>
+              {showCreate ? <X className="mr-2 h-4 w-4" /> : <Plus className="mr-2 h-4 w-4" />}
+              {showCreate ? 'Close' : 'Create Auction'}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -146,17 +178,29 @@ export default function AuctionList() {
                     {a.status}
                   </Badge>
                 </div>
-                <Button 
-                  className="w-full mt-2" 
-                  variant="outline"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(`/auction/${a.auctionId}`);
-                  }}
-                >
-                  <Eye className="mr-2 h-4 w-4" />
-                  View Details
-                </Button>
+                <div className="flex gap-2 mt-2">
+                  <Button 
+                    className="flex-1" 
+                    variant="outline"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/auction/${a.auctionId}`);
+                    }}
+                  >
+                    <Eye className="mr-2 h-4 w-4" />
+                    View Details
+                  </Button>
+                  {isSeller && a.sellerId === user?.username && (
+                    <Button 
+                      variant="destructive"
+                      size="icon"
+                      onClick={(e) => handleDelete(a.auctionId, e)}
+                      title="Delete auction"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
