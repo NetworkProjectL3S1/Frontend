@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Loader2, LogOut, User as UserIcon, ChevronDown, ShoppingCart, Store } from 'lucide-react';
 import LoginForm from './components/LoginForm';
 import AuctionList from './components/AuctionList';
 import UserProfile from './components/UserProfile';
+import AuctionPage from './pages/AuctionPage';
 import { Badge } from './components/ui/badge';
 import {
   DropdownMenu,
@@ -16,9 +18,10 @@ import './App.css';
 
 function AppContent() {
   const { isAuthenticated, user, logout, loading } = useAuth();
-  const [currentView, setCurrentView] = useState('auctions'); // 'auctions' or 'profile'
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -33,13 +36,14 @@ function AppContent() {
   }, []);
 
   const handleProfileClick = () => {
-    setCurrentView('profile');
+    navigate('/profile');
     setDropdownOpen(false);
   };
 
   const handleLogout = () => {
     setDropdownOpen(false);
     logout();
+    navigate('/');
   };
 
   const getRoleIcon = () => {
@@ -67,7 +71,7 @@ function AppContent() {
         <div className="container mx-auto flex h-16 items-center justify-between px-6 md:px-8 lg:px-12">
           <div 
             className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity" 
-            onClick={() => setCurrentView('auctions')}
+            onClick={() => navigate('/')}
           >
             <div className="w-8 h-8 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center text-white font-bold">
               AH
@@ -140,7 +144,11 @@ function AppContent() {
         </div>
       </header>
       <main className="min-h-[calc(100vh-4rem)] bg-gradient-to-br from-slate-50 via-white to-teal-50/30">
-        {currentView === 'auctions' ? <AuctionList /> : <UserProfile />}
+        <Routes>
+          <Route path="/" element={<AuctionList />} />
+          <Route path="/auction/:auctionId" element={<AuctionPage />} />
+          <Route path="/profile" element={<UserProfile />} />
+        </Routes>
       </main>
     </div>
   );
@@ -148,8 +156,10 @@ function AppContent() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
+    <BrowserRouter>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </BrowserRouter>
   );
 }

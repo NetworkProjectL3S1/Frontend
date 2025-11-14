@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { RefreshCw, Plus, X } from 'lucide-react'
-import AuctionDetails from './AuctionDetails'
+import { useNavigate } from 'react-router-dom'
+import { RefreshCw, Plus, X, Eye } from 'lucide-react'
 import CreateAuctionForm from './CreateAuctionForm'
 import { Button } from './ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
@@ -9,10 +9,10 @@ import { Badge } from './ui/badge'
 const API_BASE = 'http://localhost:8081/api'
 
 export default function AuctionList() {
+  const navigate = useNavigate()
   const [auctions, setAuctions] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [selected, setSelected] = useState(null)
   const [showCreate, setShowCreate] = useState(false)
   const [rawResponse, setRawResponse] = useState(null)
 
@@ -110,12 +110,8 @@ export default function AuctionList() {
         {(Array.isArray(auctions) ? auctions : []).map((a) => (
           <Card 
             key={a.auctionId || a.id || JSON.stringify(a)}
-            className={`cursor-pointer transition-all hover:shadow-lg border-2 ${
-              selected?.auctionId === a.auctionId 
-                ? 'ring-2 ring-primary border-primary shadow-md' 
-                : 'border-border hover:border-primary/50'
-            }`}
-            onClick={() => handleSelect(a)}
+            className="cursor-pointer transition-all hover:shadow-lg border-2 border-border hover:border-primary/50 hover:scale-[1.02]"
+            onClick={() => navigate(`/auction/${a.auctionId}`)}
           >
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between gap-2">
@@ -150,6 +146,17 @@ export default function AuctionList() {
                     {a.status}
                   </Badge>
                 </div>
+                <Button 
+                  className="w-full mt-2" 
+                  variant="outline"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/auction/${a.auctionId}`);
+                  }}
+                >
+                  <Eye className="mr-2 h-4 w-4" />
+                  View Details
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -162,12 +169,6 @@ export default function AuctionList() {
             <p className="text-muted-foreground">No auctions available. Create one to get started!</p>
           </CardContent>
         </Card>
-      )}
-
-      {selected && (
-        <div className="mt-8">
-          <AuctionDetails auction={selected} onClose={() => setSelected(null)} onRefresh={fetchAuctions} />
-        </div>
       )}
     </div>
   )

@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { DollarSign, Loader2 } from 'lucide-react'
+import { useAuth } from '../contexts/AuthContext'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
@@ -8,6 +9,7 @@ import { Label } from './ui/label'
 const API_BASE = 'http://localhost:8081/api'
 
 export default function BidPanel({ auctionId, currentHighest = 0, onBidded }) {
+  const { user } = useAuth()
   const [amount, setAmount] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -28,7 +30,7 @@ export default function BidPanel({ auctionId, currentHighest = 0, onBidded }) {
       const res = await fetch(`${API_BASE}/bids/place`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ auctionId, userId: 'currentUser', amount: value })
+        body: JSON.stringify({ auctionId, userId: user?.username || 'Guest', amount: value })
       })
       const data = await res.json()
       if (data.success) {
