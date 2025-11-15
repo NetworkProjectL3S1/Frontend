@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Java WebSocket Chat Client</title>
+    <link rel="stylesheet" href="src/styles/main.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💬</text></svg>">
+</head>
+
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h1>Java WebSocket Chat</h1>
+            <div class="connection-status">
+                <span class="status-indicator status-disconnected" id="statusIndicator"></span>
+                <span id="connectionStatus">Disconnected</span>
+            </div>
+        </div>
+
+        <div class="command-help" id="commandHelp">
+            <h4>Available Commands:</h4>
+            <ul>
+                <li><strong>/help</strong> - Show available commands</li>
+                <li><strong>/users</strong> - List connected users</li>
+                <li><strong>/time</strong> - Get current server time</li>
+                <li><strong>/bot &lt;message&gt;</strong> - Chat with the bot</li>
+                <li><strong>/pm &lt;username&gt; &lt;message&gt;</strong> - Send private message</li>
+                <li><strong>/quit</strong> - Disconnect from server</li>
+            </ul>
+        </div>
+
+        <div class="chat-messages" id="chatMessages"></div>
+
+        <div class="username-container" id="usernameContainer">
+            <input type="text" id="usernameInput" placeholder="Enter your username..." maxlength="20">
+            <button class="btn btn-success" onclick="chatClient.connect()">Connect</button>
+        </div>
+
+        <div class="chat-input-container hidden" id="chatInputContainer">
+            <input type="text" id="messageInput" placeholder="Type your message..." maxlength="500">
+            <button class="btn btn-primary" onclick="chatClient.sendMessage()">Send</button>
+            <button class="btn btn-danger" onclick="chatClient.disconnect()">Disconnect</button>
+        </div>
+    </div>
+
+    <script src="src/js/chat-client.js"></script>
+</body>
+
+</html>

@@ -1,27 +1,61 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 217 91% 60%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 217 91% 60%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217 91% 60%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 217 91% 60%;
+  }
 }
 
-:root {
-  --primary-color: #2563eb;
-  --primary-hover: #1d4ed8;
-  --secondary-color: #64748b;
-  --success-color: #10b981;
-  --error-color: #ef4444;
-  --warning-color: #f59e0b;
-  --bg-primary: #ffffff;
-  --bg-secondary: #f8fafc;
-  --bg-tertiary: #f1f5f9;
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #94a3b8;
-  --border-color: #e2e8f0;
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
 }
 
 body {
@@ -42,7 +76,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: 16px;
-  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+  background: linear-gradient(120deg, rgba(14,118,110,0.95) 0%, rgba(246,250,249,0.95) 100%);
   color: white;
   position: relative;
   overflow: hidden;
@@ -79,15 +113,6 @@ body {
 .app-container {
   min-height: 100vh;
   background: var(--bg-secondary);
-  background-image: 
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.5) 0%, transparent 100%),
-    repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      rgba(0, 0, 0, 0.02) 2px,
-      rgba(0, 0, 0, 0.02) 4px
-    );
 }
 
 .app-header {
@@ -181,6 +206,92 @@ body {
   margin: 0 auto;
   padding: 32px 24px;
   background: transparent;
+}
+
+/* Auction list styles */
+.auction-list-root {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.list-actions { display: flex; gap: 8px; }
+
+.auction-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.auction-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  gap: 12px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.auction-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+.auction-card.selected { outline: 2px solid rgba(14,118,110,0.12); }
+
+.card-media { width: 72px; height: 72px; flex: 0 0 72px; display:flex; align-items:center; justify-content:center; }
+.media-placeholder { width:72px; height:72px; border-radius:10px; background: linear-gradient(135deg,var(--primary-color), var(--accent-color)); color:white; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:20px; }
+
+.card-title { font-size:16px; margin:0; color:var(--text-primary); }
+.card-desc { font-size:13px; color:var(--text-secondary); margin:6px 0; min-height:36px; }
+.card-meta { display:flex; gap:8px; align-items:center; }
+.meta { font-weight:700; color:var(--text-primary); }
+.meta.muted { color:var(--text-muted); font-weight:500 }
+
+.details-panel { margin-top: 18px; }
+
+/* Auction details */
+.auction-details { background: var(--bg-primary); border:1px solid var(--border-color); border-radius:12px; padding:16px; box-shadow:var(--shadow-sm); }
+.details-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px }
+.details-body { display:flex; gap:16px; }
+.details-left { flex:1 }
+.details-right { width:340px }
+.details-card { padding:12px; border-radius:8px; background:var(--bg-tertiary); border:1px solid var(--border-color); }
+.details-stats { list-style:none; display:flex; gap:12px; margin-top:12px }
+.desc { color:var(--text-secondary); }
+
+.bid-history { margin-top:12px }
+.bid-row { display:flex; gap:12px; align-items:center; border-bottom:1px dashed var(--border-color); padding:8px 0 }
+.bid-user { font-weight:600 }
+.bid-amount { margin-left:auto; font-weight:700 }
+.bid-time { margin-left:12px; color:var(--text-muted); font-size:12px }
+
+.bid-panel { margin-bottom:12px }
+.bid-form { display:flex; gap:8px; }
+.bid-form input { flex:1; padding:8px 10px; border-radius:8px; border:1px solid var(--border-color) }
+
+.create-auction { background:var(--bg-primary); border:1px solid var(--border-color); padding:12px; border-radius:8px }
+.create-form .form-row { margin-bottom:10px }
+.two-cols { display:flex; gap:8px }
+.form-actions { display:flex; gap:8px; justify-content:flex-end }
+
+.btn { padding:8px 12px; border-radius:8px; border:none; cursor:pointer; font-weight:600 }
+.btn-primary { background:var(--primary-color); color:white }
+.btn-primary:hover { background:var(--primary-hover) }
+.btn-outline { background:transparent; border:1px solid var(--border-color); color:var(--text-primary) }
+
+.error { color:var(--error-color); margin-top:8px }
+.success { color:var(--success-color); margin-top:8px }
+
+@media (max-width: 900px) {
+  .details-body { flex-direction:column }
+  .details-right { width:100% }
 }
 
 /* Responsive design */

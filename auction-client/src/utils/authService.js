@@ -1,10 +1,25 @@
 // Authentication service for Java backend integration
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081/api';
+
+// Simple built-in mock user for local development/testing when backend is not available
+const MOCK_USER = {
+  username: 'demo_user',
+  password: 'demo_pass',
+  email: 'demo@example.com',
+  role: 'BUYER',
+  token: 'MOCK_TOKEN_DEMO'
+}
 
 /**
  * Login user with username and password
  */
 export async function login(username, password) {
+  // Local mock shortcut: allow demo_user/demo_pass without contacting backend
+  if (username === MOCK_USER.username && password === MOCK_USER.password) {
+    localStorage.setItem('authToken', MOCK_USER.token);
+    localStorage.setItem('user', JSON.stringify({ username: MOCK_USER.username, email: MOCK_USER.email, role: MOCK_USER.role }));
+    return { success: true, user: { username: MOCK_USER.username, email: MOCK_USER.email, role: MOCK_USER.role }, token: MOCK_USER.token };
+  }
   try {
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
@@ -50,6 +65,12 @@ export async function login(username, password) {
  * Register a new user
  */
 export async function register(username, password, email = '', role = '') {
+  // If registering the demo account locally, short-circuit for convenience
+  if (username === MOCK_USER.username) {
+    localStorage.setItem('authToken', MOCK_USER.token);
+    localStorage.setItem('user', JSON.stringify({ username: MOCK_USER.username, email: MOCK_USER.email, role: MOCK_USER.role }));
+    return { success: true, user: { username: MOCK_USER.username, email: MOCK_USER.email, role: MOCK_USER.role }, token: MOCK_USER.token };
+  }
   try {
     const response = await fetch(`${API_BASE_URL}/auth/register`, {
       method: 'POST',
@@ -127,6 +148,11 @@ export async function verifyToken() {
   const token = getToken();
   if (!token) {
     return { valid: false };
+  }
+
+  // Accept mock token locally without contacting backend
+  if (token === MOCK_USER.token) {
+    return { valid: true, user: { username: MOCK_USER.username, email: MOCK_USER.email, role: MOCK_USER.role } };
   }
 
   try {
